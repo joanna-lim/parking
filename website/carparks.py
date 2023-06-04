@@ -16,42 +16,42 @@ def svy21_to_wgs84(x, y):
     
 # Format the carpark information to match the database
 def format_carpark_information(record):
-    fattributes = list()
-    fattributes.append(record[1])
-    fattributes.append(float(record[2]))
-    fattributes.append(float(record[3]))
-    fattributes.append(record[4])
-    fattributes.append(record[5])
-    fattributes.append(record[6])
-    fattributes.append(record[7])
+    carpark_info = list()
+    carpark_info.append(record[1])
+    carpark_info.append(float(record[2]))
+    carpark_info.append(float(record[3]))
+    carpark_info.append(record[4])
+    carpark_info.append(record[5])
+    carpark_info.append(record[6])
+    carpark_info.append(record[7])
 
     np = record[8]
     if np == "YES":
-        fattributes.append(True)
+        carpark_info.append(True)
     elif np == "NO":
-        fattributes.append(False)
+        carpark_info.append(False)
     else:
         print("Error")
         return None
 
-    fattributes.append(int(record[9]))
-    fattributes.append(float(record[10]))
+    carpark_info.append(int(record[9]))
+    carpark_info.append(float(record[10]))
 
     cpb = record[11]
     if cpb == "Y":
-        fattributes.append(True)
+        carpark_info.append(True)
     elif cpb == "N":
-        fattributes.append(False)
+        carpark_info.append(False)
     else:
         print("Error")
         return None
     
-    return fattributes
+    return carpark_info
 
 # HDB carpark information mainly consists of information that changes rarely
 # We will only need to update everytime the webapp is started
 def update_carparks():
-    print("XXXXX Updating carparks XXXXXXXXXXXXXXXXXX")
+    print("-- updating HDB carparks --")
     from . import db
     from .models import CarPark
     import csv
@@ -68,8 +68,8 @@ def update_carparks():
         # Will only create and fill the database if it hasn't been created yet, won't update
         # May need to delete and run main.py again if you wan to update
         if not carpark:
-            fattributes = format_carpark_information(record)
-            lat, lon = svy21_to_wgs84(fattributes[1], fattributes[2])
+            carpark_info = format_carpark_information(record)
+            lat, lon = svy21_to_wgs84(carpark_info[1], carpark_info[2])
             carpark = CarPark(
                 car_park_no = record[0],
                 address = fattributes[0],
@@ -77,20 +77,8 @@ def update_carparks():
                 y_coord = fattributes[2],
                 latitude = lat,
                 longitude = lon,
-                #car_park_type  = fattributes[3],
-                #type_of_parking_system = fattributes[4],
-                #short_term_parking = fattributes[5],
-                #free_parking = fattributes[6],
-                #night_parking = fattributes[7],
-                #car_park_decks = fattributes[8],
-                #gantry_height = fattributes[9],
-                #car_park_basement = fattributes[10],
-                # attributes below are not in the dataset being queried
-                #total_lots = None,
                 lots_available = None,
                 lot_type = None,
-                #lot_info_last_updated = None,
-                #no_of_interested_drivers = 0
             )
             db.session.add(carpark)
     
@@ -99,7 +87,7 @@ def update_carparks():
 def generate_geojson():
     from . import db
     from .models import CarPark
-    print("XXXXX Generating GeoJSON XXXXXXXXXXXXXXXXX")
+    print("-- generating geojson for mapbox --")
     carparks = CarPark.query.all()
     features = []
     for carpark in carparks:
@@ -113,14 +101,8 @@ def generate_geojson():
             'properties': {
                 'car_park_no': carpark.car_park_no,
                 'address': carpark.address,
-                # 'total_lots': carpark.total_lots,
                 'lots_available': carpark.lots_available,
                 'lot_type': carpark.lot_type
-                # 'vacancy_percentage': int((carpark.lots_available/carpark.total_lots)*100),
-                # 'car_park_type': carpark.car_park_type,
-                # 'type_of_parking_system': carpark.type_of_parking_system,
-                # 'free_parking': carpark.free_parking,
-                # 'no_of_interested_drivers': carpark.no_of_interested_drivers
             },
             'type': "Feature"
         }
@@ -133,11 +115,9 @@ def generate_geojson():
     json_str = json.dumps(geojson, indent=4)
     with open(os.path.join('website', 'carparks.json'), 'w') as f:
         f.write(json_str)
-    abs_path = os.path.abspath('carparks.json')
-    print(f"GeoJSON file saved to: {abs_path}")
 
 def update_carparks_availability():
-    print("XXXXX Updating carparks availability XXXXX")
+    print("-- updating HDB carpark availabilities --")
     from . import db
     from .models import CarPark
 
@@ -154,7 +134,6 @@ def update_carparks_availability():
     with open(os.path.join('website', 'datagov.json'), 'w') as f:
         f.write(json_str)
     abs_path = os.path.abspath('datagov.json')
-    print(f"file saved to: {abs_path}")
 
     records = json_data['items'][0]['carpark_data']
     
@@ -184,10 +163,9 @@ def ltadatamall():
     fileobj = urllib.request.urlopen(req)
     json_data = json.load(fileobj)
     filtered_data = [item for item in json_data['value'] if item['Agency'] in ['LTA', 'URA']]
-    with open(os.path.join('website', 'filtered_data.json'), 'w') as f:
+    with open(os.path.join('website', 'ltadatamall.json'), 'w') as f:
         json.dump(filtered_data, f, indent=4)
-    abs_path = os.path.abspath('filtered_data.json')
-    print(f"Filtered data has been saved to {abs_path}.")
+    print("-- updating LTA and URA carpark availabilities --")
 
     for item in filtered_data:
         car_park_no = item.get("CarParkID")

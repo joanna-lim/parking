@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 import os
-from .update_carparks import update_carparks, update_carparks_availability, generate_geojson, ltadatamall
+from .carparks import update_carparks, update_carparks_availability, generate_geojson, ltadatamall
 from time import sleep
 from threading import Thread, active_count
 
