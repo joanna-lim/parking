@@ -3,3 +3,8 @@ venv/
 .env
 *instance/database.db
 .DS_Store
+website/carparks.json
+website/datagov.json
+website/carparks.json
+website/filtered_data.json
+website/hdb-carpark-information.csv
