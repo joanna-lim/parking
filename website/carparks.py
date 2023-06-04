@@ -72,9 +72,9 @@ def update_carparks():
             lat, lon = svy21_to_wgs84(carpark_info[1], carpark_info[2])
             carpark = CarPark(
                 car_park_no = record[0],
-                address = fattributes[0],
-                x_coord = fattributes[1],
-                y_coord = fattributes[2],
+                address = carpark_info[0],
+                x_coord = carpark_info[1],
+                y_coord = carpark_info[2],
                 latitude = lat,
                 longitude = lon,
                 lots_available = None,

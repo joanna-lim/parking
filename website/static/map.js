@@ -88,3 +88,21 @@ async function loadGeoJSONData() {
   });
 
   loadGeoJSONData();
+
+  map.on("click", "carparks-layer", function (e) {
+    var coordinates = e.features[0].geometry.coordinates.slice();
+    var lotsAvailable = e.features[0].properties.lots_available;
+    var address = e.features[0].properties.address;
+  
+    var popupContent = "<h3>Lots Available: " + lotsAvailable + "</h3>" +
+    "<p>Address: " + address + "</p>";
+  
+    while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+      coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+    }
+  
+    new mapboxgl.Popup()
+      .setLngLat(coordinates)
+      .setHTML(popupContent)
+      .addTo(map);
+  });
