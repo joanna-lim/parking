@@ -16,16 +16,72 @@
       body {
         margin: 0;
         padding: 0;
+        overflow: hidden;
       }
-      #map {
+
+      #search-container {
         position: absolute;
-        top: 0;
-        bottom: 0;
+        top: 35px;
+        left: 10px;
+        transform: translateY(-50%);
+        z-index: 1;
+        background-color: #ffffff;
+        width: 300px;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        padding: 10px;
+        box-sizing: border-box;
+      }
+
+      #search-input {
         width: 100%;
+        padding: 8px;
+        font-size: 16px;
+        border: none;
+        outline: none;
+        background-color: transparent;
+      }
+
+      #search-input::placeholder {
+        color: #aaa;
+      }
+
+      @media screen and (max-width: 600px) {
+        #search-container {
+          top: 10px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 90%;
+          max-width: 300px;
+        }
+      }
+
+      @media screen and (min-width: 601px) {
+        #search-container {
+          top: 35px;
+          left: 10px;
+          transform: translateY(-50%);
+          width: 300px;
+        }
+      }
+
+      #map {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
       }
     </style>
   </head>
   <body>
+    <div id="search-container">
+      <input
+        id="search-input"
+        type="text"
+        placeholder="Search for a location"
+      />
+    </div>
     <div id="map"></div>
     <script>
       var MAPBOX_SECRET_KEY = "{{ MAPBOX_SECRET_KEY }}";
