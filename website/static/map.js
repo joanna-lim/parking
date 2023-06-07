@@ -12,7 +12,6 @@ async function fetchGeoJSONData() {
     method: "GET",
   });
   geojsonData = await response.json();
-  console.log(geojsonData);
 }
 
 async function waitTillTargetReady(isTargetReady, milliseconds) {
@@ -90,12 +89,26 @@ loadGeoJSONData();
 
 map.on("click", "carparks-layer", function (e) {
   var coordinates = e.features[0].geometry.coordinates.slice();
-  var lotsAvailable = e.features[0].properties.lots_available;
+  var carParkNo = e.features[0].properties.car_park_no;
   var address = e.features[0].properties.address;
+  var lotsAvailable = e.features[0].properties.lots_available;
+  var lotType = e.features[0].properties.lot_type;
 
   var popupContent =
-    "<h3>Lots Available: " + lotsAvailable + "</h3>" +
-    "<p>Address: " + address + "</p>";
+    "<div style='background-color: #ffffff; padding: 10px; border-radius: 5px;'>" +
+    "<h3 style='margin-bottom: 5px; color: #333;'>Address: " +
+    address +
+    "</h3>" +
+    "<p style='margin: 0; color: #777;'>Carpark No. " +
+    carParkNo +
+    "</p>" +
+    "<p style='margin: 0; color: #777;'>Lots Available: " +
+    lotsAvailable +
+    "</p>" +
+    "<p style='margin: 0; color: #777;'>Lot Type: " +
+    lotType +
+    "</p>" +
+    "</div>";
 
   while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
     coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
@@ -103,3 +116,13 @@ map.on("click", "carparks-layer", function (e) {
 
   new mapboxgl.Popup().setLngLat(coordinates).setHTML(popupContent).addTo(map);
 });
+
+map.addControl(
+  new MapboxGeocoder({
+    accessToken: mapboxgl.accessToken,
+    countries: 'sg',
+    mapboxgl: mapboxgl,
+  })
+);
+
+document.getElementById("geocoder").appendChild(geocoder.onAdd(map));
