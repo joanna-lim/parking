@@ -1,5 +1,6 @@
 mapboxgl.accessToken = window.MAPBOX_SECRET_KEY;
 
+// base map 
 var map = new mapboxgl.Map({
   container: "map",
   style: "mapbox://styles/mapbox/streets-v12",
@@ -25,6 +26,7 @@ function isMapLoaded() {
   return map && map.loaded();
 }
 
+// loading carpark data
 async function loadGeoJSONData() {
   try {
     await fetchGeoJSONData();
@@ -82,6 +84,77 @@ map.on("zoom", function () {
 
 loadGeoJSONData();
 
+// search function
+map.addControl(
+  new MapboxGeocoder({
+    accessToken: mapboxgl.accessToken,
+    countries: 'sg',
+    mapboxgl: mapboxgl,
+  })
+);
+
+// get user current location
+var geolocate = new mapboxgl.GeolocateControl({
+  positionOptions: {
+      enableHighAccuracy: true
+  },
+  trackUserLocation: true
+});
+
+map.addControl(geolocate);
+
+var userCoordinates, userLatitude, userLongitude
+
+geolocate.on('geolocate', function(event) {
+  userCoordinates = event.coords;
+  userLatitude = userCoordinates.latitude;
+  userLongitude = userCoordinates.longitude;
+  console.log(userLatitude, userLongitude)
+});
+
+// interacting with bubbles and route visualisation
+async function getRoute(end) {
+  const query = await fetch(
+    `https://api.mapbox.com/directions/v5/mapbox/driving/${userLongitude},${userLatitude};${end[0]},${end[1]}?steps=true&geometries=geojson&access_token=${mapboxgl.accessToken}`,
+    { method: 'GET' }
+  );
+  const json = await query.json();
+  const data = json.routes[0];
+  const route = data.geometry.coordinates;
+  const geojson = {
+    type: 'Feature',
+    properties: {},
+    geometry: {
+      type: 'LineString',
+      coordinates: route
+    }
+  };
+  // if the route already exists on the map, we'll reset it using setData
+  if (map.getSource('route')) {
+    map.getSource('route').setData(geojson);
+  }
+  // otherwise, we'll make a new request
+  else {
+    map.addLayer({
+      id: 'route',
+      type: 'line',
+      source: {
+        type: 'geojson',
+        data: geojson
+      },
+      layout: {
+        'line-join': 'round',
+        'line-cap': 'round'
+      },
+      paint: {
+        'line-color': '#3887be',
+        'line-width': 5,
+        'line-opacity': 0.75
+      }
+    });
+  }
+}
+
 map.on("click", "carparks-layer", function (e) {
   var coordinates = e.features[0].geometry.coordinates.slice();
   var carParkNo = e.features[0].properties.car_park_no;
@@ -103,54 +176,26 @@ map.on("click", "carparks-layer", function (e) {
     "<p style='margin: 0; color: #777;'>Lot Type: " +
     lotType +
     "</p>" +
+    "<br /> <button class='get-route-button' style= 'background-color: #007bff; color: #ffffff; border: none; border-radius: 4px; padding: 4px 10px; font-size: 13px; cursor: pointer;'>Get Route</button>"
     "</div>";
 
   while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
     coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
   }
 
-  new mapboxgl.Popup().setLngLat(coordinates).setHTML(popupContent).addTo(map);
+  var popup = new mapboxgl.Popup().setLngLat(coordinates).setHTML(popupContent).addTo(map);
+  popup.getElement().addEventListener('click', function(event) {
+    if (event.target.classList.contains('get-route-button')) {
+      var end = [coordinates[0], coordinates[1]]
+      getRoute(end)
+    }
+    
+  });
+
 });
 
-map.addControl(
-  new MapboxGeocoder({
-    accessToken: mapboxgl.accessToken,
-    countries: 'sg',
-    mapboxgl: mapboxgl,
-  })
-);
-
-
-
-// map.addControl(
-//   new mapboxgl.GeolocateControl({
-//   positionOptions: {
-//   enableHighAccuracy: true
-//   },
-//   // When active the map will receive updates to the device's location as it changes.
-//   trackUserLocation: true,
-//   })
-// );
-
-var geolocate = new mapboxgl.GeolocateControl({
-  positionOptions: {
-      enableHighAccuracy: true
-  },
-  trackUserLocation: true
-});
-
-map.addControl(geolocate);
-
-geolocate.on('geolocate', function(event) {
-  var userCoordinates = event.coords;
-  var userLatitude = userCoordinates.latitude;
-  var userLongitude = userCoordinates.longitude;
-  console.log(userLatitude, userLongitude)
-
-
-  // Now you can use userLatitude and userLongitude for your purposes
-});
-
+// not sure - this raises an error but i can't remove it or else search won't work
 document.getElementById("geocoder").appendChild(geocoder.onAdd(map));
 
-document.getElementById("geocoder").appendChild(geocoder.onAdd(map));
+
+
