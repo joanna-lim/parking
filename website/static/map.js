@@ -76,12 +76,7 @@ map.on("zoom", function () {
     "interpolate",
     ["linear"],
     ["zoom"],
-    10,
-    0,
-    14,
-    0.6,
-    18,
-    1,
+    10, 0, 14, 0.6, 18, 1,
   ]);
 });
 
@@ -96,7 +91,7 @@ map.on("click", "carparks-layer", function (e) {
 
   var popupContent =
     "<div style='background-color: #ffffff; padding: 10px; border-radius: 5px;'>" +
-    "<h3 style='margin-bottom: 5px; color: #333;'>Address: " +
+    "<h3 style='margin-bottom: 5px; color: #333;'>" +
     address +
     "</h3>" +
     "<p style='margin: 0; color: #777;'>Carpark No. " +
@@ -124,5 +119,38 @@ map.addControl(
     mapboxgl: mapboxgl,
   })
 );
+
+
+
+// map.addControl(
+//   new mapboxgl.GeolocateControl({
+//   positionOptions: {
+//   enableHighAccuracy: true
+//   },
+//   // When active the map will receive updates to the device's location as it changes.
+//   trackUserLocation: true,
+//   })
+// );
+
+var geolocate = new mapboxgl.GeolocateControl({
+  positionOptions: {
+      enableHighAccuracy: true
+  },
+  trackUserLocation: true
+});
+
+map.addControl(geolocate);
+
+geolocate.on('geolocate', function(event) {
+  var userCoordinates = event.coords;
+  var userLatitude = userCoordinates.latitude;
+  var userLongitude = userCoordinates.longitude;
+  console.log(userLatitude, userLongitude)
+
+
+  // Now you can use userLatitude and userLongitude for your purposes
+});
+
+document.getElementById("geocoder").appendChild(geocoder.onAdd(map));
 
 document.getElementById("geocoder").appendChild(geocoder.onAdd(map));
